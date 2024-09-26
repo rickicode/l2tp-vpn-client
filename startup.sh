@@ -1,7 +1,7 @@
 #!/bin/sh
 
 log() {
-  echo "[l2tp-vpn-client @$(date +'%F %T')] $1"
+  echo "[l2tp-vpn-server @$(date +'%F %T')] $1"
 }
 
 # Fungsi untuk mendapatkan IP publik
@@ -21,9 +21,10 @@ setupVPN() {
   sed -i 's/right=.*/right='$VPN_SERVER_IPV4'/' /etc/ipsec.conf
   echo ': PSK "'$VPN_PSK'"' > /etc/ipsec.secrets
   sed -i 's/lns = .*/lns = '$VPN_SERVER_IPV4'/' /etc/xl2tpd/xl2tpd.conf
-  sed -i 's/name .*/name '$VPN_USERNAME'/' /etc/ppp/options.l2tpd.client
-  sed -i 's/password .*/password '$VPN_PASSWORD'/' /etc/ppp/options.l2tpd.client
   
+  # Tambahkan akun ke chap-secrets
+  echo "$VPN_USERNAME * $VPN_PASSWORD *" >> /etc/ppp/chap-secrets
+
   log "Launching IPsec"
   ipsec start
   sleep 3
