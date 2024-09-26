@@ -64,6 +64,26 @@ EOF
   log "IPsec configuration has been created"
 }
 
+# Create xl2tpd config
+createXl2tpdConf() {
+  log "Creating xl2tpd configuration at /etc/xl2tpd/xl2tpd.conf"
+  cat > /etc/xl2tpd/xl2tpd.conf <<EOF
+[global]
+port = 1701
+
+[lns default]
+ip range = 192.168.42.10-192.168.42.250
+local ip = 192.168.42.1
+require chap = yes
+refuse pap = yes
+require authentication = yes
+name = l2tpd
+pppoptfile = /etc/ppp/options.xl2tpd
+length bit = yes
+EOF
+  log "xl2tpd configuration has been created"
+}
+
 setupVPN() {
   log "Editing configuration files"
 
@@ -71,12 +91,14 @@ setupVPN() {
   VPN_SERVER_IPV4=$(getPublicIP)
   log "Public IP: $VPN_SERVER_IPV4"
 
-  # Buat file ipsec.conf dengan pengaturan dari environment variable
+  # Buat file ipsec.conf
   createIPsecConf "$VPN_SERVER_IPV4"
+
+  # Buat file xl2tpd.conf
+  createXl2tpdConf
 
   # Mengganti nilai konfigurasi PSK dan XL2TPD
   echo ': PSK "'$VPN_PSK'"' > /etc/ipsec.secrets
-  sed -i 's/lns = .*/lns = '$VPN_SERVER_IPV4'/' /etc/xl2tpd/xl2tpd.conf
 
   # Tambahkan akun ke chap-secrets
   echo "$VPN_USERNAME * $VPN_PASSWORD *" >> /etc/ppp/chap-secrets
